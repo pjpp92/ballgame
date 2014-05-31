@@ -4,27 +4,35 @@
 $(document).ready(function(){
     var ctx;
 
-    var x = 50;
-    var y = 50;
-    var r = 15;
-    var dx = 5;
-    var ddx = 1;
-    var dy = 0;
-    var ddy = 0.2;
+    var ball = {};
+        ball.x = 50;
+        ball.y = 50;
+        ball.r = 15;
+        ball.dy = 0;
+        ball.ddy = 0.2;
+        ball.color = "blue";
 
-    var x_shot = [];
-    var y_shot = [];
+    var shot = {};
+        shot.x = [];
+        shot.y = [];
+        shot.r = 7;
+        shot.time = 200;
 
-    IDTH = $("#canvas").width();
+    WIDTH = $("#canvas").width();
     HEIGHT = $("#canvas").height();
+
+    var meteor = {};
+         meteor.x = Math.random() * WIDTH;
+         meteor.y = 0;
+         meteor.r = (Math.random() * 75) + 25;
 
     jump = false;
     rightDown = false;
     leftDown = false;
-    shot = false;
-    shot1 = 0;
+    shot_condition = false;
+    shot_condition1 = false;
 
-    ball_color = "blue"
+
 
     var floors = [[100,250,HEIGHT-100],[300,450,HEIGHT-200],[500,650,HEIGHT-300],[300,450,HEIGHT-400]
         ,[100,250,HEIGHT-500]];
@@ -34,7 +42,8 @@ $(document).ready(function(){
         ctx = $('#canvas')[0].getContext("2d");
         WIDTH = $("#canvas").width();
         HEIGHT = $("#canvas").height();
-        return setInterval(draw, 10);
+        setInterval(draw, 10);
+
     }
 
     function circle(x,y,r,color) {
@@ -46,20 +55,31 @@ $(document).ready(function(){
     }
 
     function do_shot(){
-        if (shot && shot1) {
-            circle(x,y,r/2,"green");
-            shot = false;
-            x_shot.push(x);
-            y_shot.push(y);
+        if (shot_condition && shot_condition1 && shot.time == 0) {
+            circle(ball.x,ball.y,shot.r,"green");
+            shot_condition = false;
+            shot.x.push(ball.x);
+            shot.y.push(ball.y);
+            shot.time = 200;
         }
-        if (shot1){
-            for (i=0;i<x_shot.length;i++) {
-                circle(x_shot[i],y_shot[i],r/2,"green")
-                x_shot[i] += 4
-                shot = false
+        if (shot_condition1){
+            for (i=0;i<shot.x.length;i++) {
+                circle(shot.x[i],shot.y[i],shot.r,"green");
+                shot.x[i] += 4;
+                shot_condition = false;
             }
-
         }
+    }
+
+    function do_meteor() {
+        circle(meteor.x, meteor.y, meteor.r, "red");
+        meteor.y += 10;
+        if (meteor.y>=HEIGHT + meteor.r) {
+            meteor.x = (Math.random() * WIDTH);
+            meteor.y = 0-meteor.r;
+            meteor.r = (Math.random() * 75) + 25;
+        }
+
     }
 
     function map() {
@@ -79,16 +99,10 @@ $(document).ready(function(){
         ctx.moveTo(0,HEIGHT);
         ctx.lineTo(WIDTH,HEIGHT);
         //lines
-        ctx.moveTo(100,HEIGHT-100);
-        ctx.lineTo(250,HEIGHT-100);
-        ctx.moveTo(300,HEIGHT-200);
-        ctx.lineTo(450,HEIGHT-200);
-        ctx.moveTo(500,HEIGHT-300);
-        ctx.lineTo(650,HEIGHT-300);
-        ctx.moveTo(300,HEIGHT-400);
-        ctx.lineTo(450,HEIGHT-400);
-        ctx.moveTo(100,HEIGHT-500);
-        ctx.lineTo(250,HEIGHT-500);
+        for (i=0; i<floors.length; i++){
+            ctx.moveTo(floors[i][0],floors[i][2]);
+            ctx.lineTo(floors[i][1],floors[i][2]);
+        }
 
         ctx.stroke();
         ctx.closePath();
@@ -99,8 +113,8 @@ $(document).ready(function(){
         if (evt.keyCode == 39) rightDown = true;
         else if (evt.keyCode == 37) leftDown = true;
         if (evt.keyCode == 38) jump = true;
-        if (evt.keyCode == 32) shot = true;
-        if (evt.keyCode == 32) shot1 = true;
+        if (evt.keyCode == 32) shot_condition = true;
+        if (evt.keyCode == 32) shot_condition1 = true;
     }
 
     //and unset them when the right or left key is released
@@ -108,7 +122,7 @@ $(document).ready(function(){
         if (evt.keyCode == 39) rightDown = false;
         else if (evt.keyCode == 37) leftDown = false;
         if (evt.keyCode == 38) jump = false;
-        if (evt.keyCode == 32) shot = false;
+        if (evt.keyCode == 32) shot_condition = false;
     }
 
     $(document).keydown(onKeyDown);
@@ -117,30 +131,32 @@ $(document).ready(function(){
     function draw() {
 
         ctx.clearRect(0,0,WIDTH,HEIGHT);
-        circle(x,y,r,ball_color);
+        circle(ball.x,ball.y,ball.r,ball.color);
         map();
         //grawitacja
         floor = false;
         for (i=0;i<floors.length;i++) {
-            if (x>floors[i][0] && x<floors[i][1] && y+r>=floors[i][2] && y<=floors[i][2]) floor = true;
+            if (ball.x>floors[i][0] && ball.x<floors[i][1] && ball.y+ball.r>=floors[i][2] &&
+                ball.y<=floors[i][2]) floor = true;
         }
 
-        if (y+r >= HEIGHT || floor) {
-            dy = 0;
+        if (ball.y+ball.r >= HEIGHT || floor) {
+            ball.dy = 0;
         }
         else{
-            dy += ddy;
+            ball.dy += ball.ddy;
         }
         //ruch
-        if (rightDown && x<WIDTH) x += 5;
-        else if (leftDown && x>0) x -= 5;
-        if (jump && dy == 0) {
-            y -= 150;
+        if (rightDown && ball.x<WIDTH) ball.x += 5;
+        else if (leftDown && ball.x>0) ball.x -= 5;
+        if (jump && ball.dy == 0) {
+            ball.dy -= 8;
             jump = false;
         }
-        do_shot()
-
-        y += dy;
+        do_shot();
+        ball.y += ball.dy;
+        do_meteor()
+        if (shot.time > 0) shot.time -= 2;
     }
 
     init();
