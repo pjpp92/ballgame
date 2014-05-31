@@ -12,8 +12,8 @@ $(document).ready(function(){
     var dy = 0;
     var ddy = 0.2;
 
-    var x_shot
-    var y_shot
+    var x_shot = [];
+    var y_shot = [];
 
     IDTH = $("#canvas").width();
     HEIGHT = $("#canvas").height();
@@ -49,12 +49,16 @@ $(document).ready(function(){
         if (shot && shot1) {
             circle(x,y,r/2,"green");
             shot = false;
-            x_shot = x;
-            y_shot = y;
+            x_shot.push(x);
+            y_shot.push(y);
         }
         if (shot1){
-            circle(x_shot,y_shot,r/2,"green")
-            x_shot += 4
+            for (i=0;i<x_shot.length;i++) {
+                circle(x_shot[i],y_shot[i],r/2,"green")
+                x_shot[i] += 4
+                shot = false
+            }
+
         }
     }
 
@@ -96,7 +100,7 @@ $(document).ready(function(){
         else if (evt.keyCode == 37) leftDown = true;
         if (evt.keyCode == 38) jump = true;
         if (evt.keyCode == 32) shot = true;
-        if (evt.keyCode == 32) shot1 += 1;
+        if (evt.keyCode == 32) shot1 = true;
     }
 
     //and unset them when the right or left key is released
@@ -104,7 +108,7 @@ $(document).ready(function(){
         if (evt.keyCode == 39) rightDown = false;
         else if (evt.keyCode == 37) leftDown = false;
         if (evt.keyCode == 38) jump = false;
-        if (evt.keyCode == 32) shot = true;
+        if (evt.keyCode == 32) shot = false;
     }
 
     $(document).keydown(onKeyDown);
